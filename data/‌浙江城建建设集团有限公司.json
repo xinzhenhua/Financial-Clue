@@ -1,0 +1,79 @@
+{
+ "company": "‌浙江城建建设集团有限公司",
+ "updated_at": "2026-11-14T05:25:49Z",
+ "providers": {
+  "ggzy": {
+   "ok": false,
+   "error": "ConnectionError: HTTPSConnectionPool(host='deal.ggzy.gov.cn', port=443): Max retries exceeded with url: /ds/deal/dealList_find.jsp (Caused by NameResolutionError(\"HTTPSConnection(host='deal.ggzy.gov.c",
+   "count": 0
+  },
+  "ccgp": {
+   "ok": true,
+   "count": 0
+  },
+  "search": {
+   "ok": true,
+   "count": 0
+  },
+  "tyc": {
+   "ok": false,
+   "skipped": true,
+   "error": "未配置 TYC_TOKEN（可选，付费）",
+   "count": 0
+  }
+ },
+ "items": [],
+ "leads": [],
+ "links": [
+  {
+   "name": "爱企查",
+   "url": "https://aiqicha.baidu.com/s?q=%E2%80%8C%E6%B5%99%E6%B1%9F%E5%9F%8E%E5%BB%BA%E5%BB%BA%E8%AE%BE%E9%9B%86%E5%9B%A2%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8",
+   "tip": "股权/对外投资/司法风险/招投标（免登录部分可看）"
+  },
+  {
+   "name": "企查查",
+   "url": "https://www.qcc.com/web/search?key=%E2%80%8C%E6%B5%99%E6%B1%9F%E5%9F%8E%E5%BB%BA%E5%BB%BA%E8%AE%BE%E9%9B%86%E5%9B%A2%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8",
+   "tip": "被执行人/限高/裁判文书/招投标"
+  },
+  {
+   "name": "天眼查",
+   "url": "https://www.tianyancha.com/search?key=%E2%80%8C%E6%B5%99%E6%B1%9F%E5%9F%8E%E5%BB%BA%E5%BB%BA%E8%AE%BE%E9%9B%86%E5%9B%A2%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8",
+   "tip": "同上，交叉验证"
+  },
+  {
+   "name": "四库一平台",
+   "url": "https://jzsc.mohurd.gov.cn/data/company?complexname=%E2%80%8C%E6%B5%99%E6%B1%9F%E5%9F%8E%E5%BB%BA%E5%BB%BA%E8%AE%BE%E9%9B%86%E5%9B%A2%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8",
+   "tip": "在建/已完工项目、业绩（需验证码）"
+  },
+  {
+   "name": "中国执行信息公开网",
+   "url": "https://zxgk.court.gov.cn/zhzxgk/",
+   "tip": "被执行人/终本/限高（需验证码）"
+  },
+  {
+   "name": "裁判文书网",
+   "url": "https://wenshu.court.gov.cn/",
+   "tip": "搜被告为原告的工程款案（需登录）"
+  },
+  {
+   "name": "国家企业信用信息公示系统",
+   "url": "https://www.gsxt.gov.cn/",
+   "tip": "股权出质/动产抵押/年报（需验证码）"
+  },
+  {
+   "name": "中登网",
+   "url": "https://www.zhongdengwang.org.cn/",
+   "tip": "应收账款质押/融资租赁登记"
+  },
+  {
+   "name": "全国公共资源交易平台",
+   "url": "https://deal.ggzy.gov.cn/ds/deal/dealList.jsp",
+   "tip": "手动搜公司名看中标项目"
+  },
+  {
+   "name": "百度",
+   "url": "https://www.baidu.com/s?wd=%22%E2%80%8C%E6%B5%99%E6%B1%9F%E5%9F%8E%E5%BB%BA%E5%BB%BA%E8%AE%BE%E9%9B%86%E5%9B%A2%E6%9C%89%E9%99%90%E5%85%AC%E5%8F%B8%22%20%E4%B8%AD%E6%A0%87",
+   "tip": "补漏"
+  }
+ ]
+}
