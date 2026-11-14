@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>财产线索一键查</title>
+<style>
+body{font:15px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;max-width:860px;margin:0 auto;padding:16px;color:#111}
+h1{font-size:20px;margin:0 0 12px}h2{font-size:16px;margin:20px 0 8px;border-bottom:1px solid #111;padding-bottom:4px}
+input,button{font:inherit;padding:8px 10px;border:1px solid #111;background:#fff;border-radius:0}
+input{width:100%;box-sizing:border-box;margin:4px 0}button{cursor:pointer}button.p{background:#111;color:#fff}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>input{flex:1;min-width:200px}
+.card{border:1px solid #111;padding:8px 10px;margin:6px 0}.muted{color:#666;font-size:13px}
+.ok{color:#0a0}.bad{color:#b00}a{color:#111}
+details{margin:8px 0}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:4px 6px;text-align:left;font-size:13px;vertical-align:top}
+</style></head><body>
+<h1>财产线索一键查</h1>
+<div class="row"><input id="name" placeholder="被执行人公司全称，如：某某建工股份有限公司"><button class="p" id="go">一键查找</button></div>
+<div id="status" class="muted"></div>
+<div id="out"></div>
+<details id="cfg"><summary>GitHub 设置（只存在本浏览器）</summary>
+<input id="owner" placeholder="GitHub 用户名/组织 owner">
+<input id="repo" placeholder="仓库名 repo（建议私有）">
+<input id="token" type="password" placeholder="Fine-grained Token（Actions: R/W，Contents: Read）">
+<input id="branch" placeholder="分支，默认 main">
+<button id="save">保存</button> <button id="load">只读取已有结果</button>
+</details>
+<script>
+const $=id=>document.getElementById(id);
+const safe=n=>n.replace(/[\\/:*?"<>|\s]/g,'_').trim();
+const cfgKeys=['owner','repo','token','branch'];
+const getCfg=()=>{const c={};cfgKeys.forEach(k=>c[k]=localStorage.getItem('gh_'+k)||'');c.branch=c.branch||'main';return c};
+cfgKeys.forEach(k=>{try{$(k).value=localStorage.getItem('gh_'+k)||''}catch(e){}});
+$('save').onclick=()=>{cfgKeys.forEach(k=>localStorage.setItem('gh_'+k,$(k).value.trim()));st('已保存')};
+const st=(t,c)=>{$('status').innerHTML=c?`<span class="${c}">${esc(t)}</span>`:esc(t)};
+const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const api=(c,path,opt={})=>fetch(`https://api.github.com/repos/${c.owner}/${c.repo}${path}`,{...opt,headers:{Authorization:'Bearer '+c.token,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28',...(opt.headers||{})}});
+
+function manualLinks(n){const q=encodeURIComponent(n);return[
+['爱企查',`https://aiqicha.baidu.com/s?q=${q}`,'股权/司法风险/招投标'],
+['企查查',`https://www.qcc.com/web/search?key=${q}`,'被执行人/限高/文书'],
+['天眼查',`https://www.tianyancha.com/search?key=${q}`,'交叉验证'],
+['四库一平台',`https://jzsc.mohurd.gov.cn/data/company?complexname=${q}`,'在建/完工项目（验证码）'],
+['中国执行信息公开网','https://zxgk.court.gov.cn/zhzxgk/','被执行人/终本（验证码）'],
+['裁判文书网','https://wenshu.court.gov.cn/','搜其作为原告的工程款案'],
+['国家企业信用信息公示系统','https://www.gsxt.gov.cn/','股权出质/动产抵押'],
+['中登网','https://www.zhongdengwang.org.cn/','应收账款质押'],
+['全国公共资源交易平台','https://deal.ggzy.gov.cn/ds/deal/dealList.jsp','手动搜中标'],
+['百度',`https://www.baidu.com/s?wd=${encodeURIComponent('"'+n+'" 中标')}`,'补漏']]}
+
+function csv(d){const H=['项目名称','业主','金额(万元)','案号','来源','类型','备注'];
+const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+return '﻿'+H.join(',')+'\n'+d.leads.map(l=>H.map(h=>q(l[h])).join(',')).join('\n')}
+
+function render(d,name){
+  const n=d?d.company:name;let h='';
+  if(d){
+    h+=`<h2>来源状态 <span class="muted">${esc(d.updated_at)}</span></h2>`;
+    for(const[k,v] of Object.entries(d.providers||{}))
+      h+=`<div class="card">${esc(k)}：${v.ok?`<span class="ok">成功 ${v.count} 条</span>`:`<span class="bad">${v.skipped?'跳过':'失败'}</span> <span class="muted">${esc(v.error||'')}</span>`}</div>`;
+    h+=`<h2>线索（${d.leads.length}）</h2>`;
+    if(d.leads.length){h+=`<button id="dl">下载 CSV（导入线索台账）</button><table><tr><th>类型</th><th>项目/事项</th><th>对方</th><th>万元</th><th>案号</th><th>来源</th></tr>`+
+      d.leads.map(l=>`<tr><td>${esc(l['类型'])}</td><td>${esc(l['项目名称'])}</td><td>${esc(l['业主'])}</td><td>${esc(l['金额(万元)'])}</td><td>${esc(l['案号'])}</td><td>${/^https?:/.test(l['来源'])?`<a href="${esc(l['来源'])}" target="_blank" rel="noopener">链接</a>`:esc(l['来源'])}</td></tr>`).join('')+'</table>'}
+    else h+='<div class="muted">自动源没有抓到与该公司相关的内容——请用下面的手动入口。</div>';
+  }
+  h+=`<h2>手动入口（已带公司名，必查）</h2>`+manualLinks(n).map(([a,u,t])=>`<div class="card"><a href="${esc(u)}" target="_blank" rel="noopener">${esc(a)}</a> <span class="muted">${esc(t)}</span></div>`).join('');
+  $('out').innerHTML=h;
+  if($('dl'))$('dl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv(d)],{type:'text/csv'}));a.download=safe(n)+'-线索.csv';a.click()};
+}
+
+async function fetchResult(c,name){
+  const r=await api(c,`/contents/data/${encodeURIComponent(safe(name))}.json?ref=${encodeURIComponent(c.branch)}`,{headers:{Accept:'application/vnd.github.raw+json'}});
+  if(r.status===404)return null;
+  if(!r.ok)throw new Error('读取失败 HTTP '+r.status);
+  return JSON.parse(await r.text());
+}
+function need(c){if(!c.owner||!c.repo||!c.token){$('cfg').open=true;st('未配置 GitHub：先显示手动入口；填好设置后可一键自动查。','bad');return false}return true}
+
+async function readOnly(){const name=$('name').value.trim();if(!name)return st('请输入公司全称','bad');
+  const c=getCfg();render(null,name);if(!need(c))return;
+  try{const d=await fetchResult(c,name);d?(render(d,name),st('已读取上次结果')):st('还没有该公司的结果，点“一键查找”')}catch(e){st(e.message,'bad')}}
+$('load').onclick=readOnly;
+
+$('go').onclick=async()=>{
+  const name=$('name').value.trim();if(!name)return st('请输入公司全称','bad');
+  const c=getCfg();render(null,name);if(!need(c))return;
+  try{
+    const t0=Date.now()-5000;
+    const r=await api(c,'/actions/workflows/scrape.yml/dispatches',{method:'POST',body:JSON.stringify({ref:c.branch,inputs:{company_name:name}})});
+    if(r.status!==204)throw new Error('触发失败 HTTP '+r.status+'（检查 Token 权限、仓库名、工作流文件路径）');
+    st('已触发，等待运行…');
+    let run=null;
+    for(let i=0;i<60;i++){await sleep(5000);
+      const j=await(await api(c,'/actions/workflows/scrape.yml/runs?event=workflow_dispatch&per_page=5')).json();
+      run=(j.workflow_runs||[]).find(x=>new Date(x.created_at).getTime()>=t0);
+      if(run){st('运行状态：'+run.status);if(run.status==='completed')break}}
+    if(!run||run.status!=='completed')throw new Error('等待超时，稍后点“只读取已有结果”');
+    if(run.conclusion!=='success')st('工作流结论：'+run.conclusion+'（仍尝试读取结果）','bad');
+    const d=await fetchResult(c,name);
+    if(!d)throw new Error('没有生成结果文件');
+    render(d,name);st('完成：'+d.updated_at);
+  }catch(e){st(e.message,'bad')}
+};
+</script></body></html>
